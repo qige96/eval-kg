@@ -10,10 +10,5 @@ import os
 import pykeen
 
 
-
-def eval_kg(kg):
-    '''
-    Take a KG as input, return the metrics about indicating the
-    quality of this KG.
-    '''
+def measure_kg(kg, lpmodel):
     pass
