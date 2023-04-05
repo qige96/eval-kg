@@ -8,6 +8,7 @@ from ampligraph.evaluation import (generate_corruptions_for_fit,
                                    create_mappings,
                                    to_idx, evaluate_performance,
                                    mrr_score, hits_at_n_score)
+from ampligraph.utils import save_model
 
 
 
@@ -24,7 +25,7 @@ def sample_negative(id_trps):
     neg = generate_corruptions_for_fit(id_trps).eval(session=tf.Session())
     return neg
 
-def inject_incorrect(id_train, proportion=0.2):
+def inject_incorrect(id_train, proportion=0.3):
     sampled = random.sample(id_train.tolist(), int(len(id_train)*proportion))
     generated_incorrect = sample_negative(np.array(sampled, dtype=np.int32))
     # replace the original sampled triples with incorrect ones
@@ -50,7 +51,11 @@ hyperparams = {
         'loss': 'nll',
         'eta': 20,
         'optimizer_params': {'lr': 1e-4},
-        # 'epochs': 1000,
+        'epochs': 500,
+        'early_stopping': True,
+        'early_stopping_params': {
+            'x_valid': id_valid
+        }
     }
 
 transe1 = TransE(**hyperparams)
@@ -70,3 +75,6 @@ ranks2 = evaluate_performance(id_test, model=transe2,
                             filter_triples=filter_original,
                             corrupt_side='s+o')
 print(f'Injected: mrr={mrr_score(ranks=ranks2)}, Hit@3={hits_at_n_score(ranks2, 3)}')
+
+save_model(transe1, './transe1.pt')
+save_model(transe2, './transe2.pt')
