@@ -130,3 +130,5 @@ dmypy.json
 
 ampligraph_datasets/
 saved_models/
+
+expres/

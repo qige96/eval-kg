@@ -51,17 +51,13 @@ hyperparams = {
         'loss': 'nll',
         'eta': 20,
         'optimizer_params': {'lr': 1e-4},
-        'epochs': 500,
-        'early_stopping': True,
-        'early_stopping_params': {
-            'x_valid': id_valid
-        }
+        'epochs': 100,
     }
 
 transe1 = TransE(**hyperparams)
 transe2 = deepcopy(transe1)
 
-transe1.fit(id_train)
+transe1.fit(id_train, early_stopping=True, early_stopping_params={'x_valid': id_valid})
 filter_original = np.concatenate((id_train, id_valid, id_test))
 ranks1 = evaluate_performance(id_test, model=transe1,
                             filter_triples=filter_original,
@@ -69,12 +65,12 @@ ranks1 = evaluate_performance(id_test, model=transe1,
 print(f'Original: mrr={mrr_score(ranks=ranks1)}, Hit@3={hits_at_n_score(ranks1, 3)}')
 
 
-transe2.fit(injected_train)
+transe2.fit(injected_train, early_stopping=True, early_stopping_params={'x_valid': id_valid})
 filter_injected = np.concatenate((injected_train, id_valid, id_test))
 ranks2 = evaluate_performance(id_test, model=transe2,
                             filter_triples=filter_original,
                             corrupt_side='s+o')
 print(f'Injected: mrr={mrr_score(ranks=ranks2)}, Hit@3={hits_at_n_score(ranks2, 3)}')
 
-save_model(transe1, './transe1.pt')
-save_model(transe2, './transe2.pt')
+save_model(transe1, 'expres/transe1.pt')
+save_model(transe2, '.expres/transe2.pt')
