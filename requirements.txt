@@ -1,1 +1,1 @@
-pykeen
+ampligraph
