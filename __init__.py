@@ -97,12 +97,12 @@ def experiment(lpmodel, kg, alpha=0.3, beta=0.1, kgname='kg', expname=None):
         'injected': measure_kg(model2, neg_kg)
     })
     print(get_cls_name(lpmodel), kgname)
-    print(res)
+    print(res.to_markdown())
     if not os.path.exists(exppath):
         os.mkdir(exppath)
     with open(os.path.join(exppath,'report.txt'), 'a') as f:
         f.write(kgname+'\n============\n')
-        f.write(res.to_latex())
+        f.write(res.to_latex()+'\n\n')
     try:
         save_model(model1, os.path.join(exppath, f'{get_cls_name(model1)}-{kgname}_orig.pt'))
         save_model(model2, os.path.join(exppath, f'{get_cls_name(model2)}-{kgname}_neg.pt'))
@@ -122,7 +122,7 @@ hyperparams = {
         # 'loss': 'nll',
         # 'eta': 20,
         'optimizer_params': {'lr': 1e-4},
-        'epochs': 300,
+        'epochs': 1000,
     }
 
 transe = TransE(**hyperparams)
@@ -145,6 +145,6 @@ for ds in [fb15k, fb15k237, wn18, wn18rr, yago310]:
     id_train, id_valid, id_test = numerise_kg(ds['train'], ds['valid'], ds['test'])
     kg = np.vstack([id_train, id_test])
 
-    experiment(comp, kg, kgname=ds['name'], expname='exp4-comp')
-    experiment(transe, kg, kgname=ds['name'], expname='exp4-transe')
+    experiment(comp, kg, kgname=ds['name'], expname='comp')
+    experiment(transe, kg, kgname=ds['name'], expname='transe')
 
