@@ -1,4 +1,4 @@
-
+import argparse
 import os
 import random
 from copy import deepcopy
@@ -22,6 +22,17 @@ if not os.environ.get('AMPLIGRAPH_DATA_HOME'):
     os.environ['AMPLIGRAPH_DATA_HOME'] = os.path.join(
         ROOT_DIR, 'ampligraph_datasets'
     )
+
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-i', '--input_dir')
+parser.add_argument('-o', '--output_dir')
+args = parser.parse_args()
+output_dir = args.output_dir
+os.environ['AMPLIGRAPH_DATA_HOME'] = args.input_dir
+
+print(os.environ['AMPLIGRAPH_DATA_HOME'])
 
 def get_cls_name(obj):
     '''Get the name of the class of the object
@@ -72,25 +83,34 @@ def measure_kg(lpmodel, kg:np.ndarray, beta=0.1):
         'hit@10': hits_at_n_score(ranks, 10)
     }
     
-def experiment(lpmodel, kg, alpha=0.3, beta=0.1, expname=None):
+def experiment(lpmodel, kg, alpha=0.3, beta=0.1, kgname='kg', expname=None):
     neg_kg = inject_incorrect(kg, alpha)
-    model1 = lpmodel
+    model1 = deepcopy(lpmodel)
     model2 = deepcopy(lpmodel)
 
     if expname == None:
         expname = datetime.now().strftime('%m.%d-%H.%M.%S')
-    exppath = os.path.join('expres', expname)
+    exppath = os.path.join(output_dir, expname)
     
     res = pd.DataFrame({
         'original': measure_kg(model1, kg), 
         'injected': measure_kg(model2, neg_kg)
     })
-    os.mkdir(exppath)
-    with open(os.path.join(exppath,'report.txt'), 'w') as f:
-        f.write(res.to_markdown())
-    save_model(model1, os.path.join(exppath, f'{get_cls_name(model1)}_orig.pt'))
-    save_model(model2, os.path.join(exppath, f'{get_cls_name(model2)}_neg.pt'))
+    print(get_cls_name(lpmodel), kgname)
+    print(res)
+    if not os.path.exists(exppath):
+        os.mkdir(exppath)
+    with open(os.path.join(exppath,'report.txt'), 'a') as f:
+        f.write(kgname+'\n============\n')
+        f.write(res.to_latex())
+    try:
+        save_model(model1, os.path.join(exppath, f'{get_cls_name(model1)}-{kgname}_orig.pt'))
+        save_model(model2, os.path.join(exppath, f'{get_cls_name(model2)}-{kgname}_neg.pt'))
+    except TypeError as err:
+        print(err)
     return 
+
+
 
 
 
@@ -102,18 +122,29 @@ hyperparams = {
         # 'loss': 'nll',
         # 'eta': 20,
         'optimizer_params': {'lr': 1e-4},
-        'epochs': 100,
+        'epochs': 300,
     }
 
 transe = TransE(**hyperparams)
 comp = ComplEx(**hyperparams)
 
 fb15k237 = load_fb15k_237()
-id_train, id_valid, id_test = numerise_kg(fb15k237['train'], fb15k237['valid'], fb15k237['test'])
-kg = np.vstack([id_train, id_test])
+wn18rr = load_wn18rr()
+yago310 = load_yago3_10()
+fb15k = load_fb15k()
+wn18 = load_wn18()
 
-# experiment(comp, kg)
+fb15k['name'] = 'fb15k'
+wn18['name'] = 'wn18'
+fb15k237['name'] = 'fb15k237'
+wn18rr['name'] = 'wn18rr'
+yago310['name'] = 'yago310'
 
-load_yago3_10()
-load_wn18rr()
-load_wn18()
+
+for ds in [fb15k, fb15k237, wn18, wn18rr, yago310]:
+    id_train, id_valid, id_test = numerise_kg(ds['train'], ds['valid'], ds['test'])
+    kg = np.vstack([id_train, id_test])
+
+    experiment(comp, kg, kgname=ds['name'], expname='exp4-comp')
+    experiment(transe, kg, kgname=ds['name'], expname='exp4-transe')
+

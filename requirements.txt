@@ -1,1 +1,4 @@
-ampligraph
+protobuf==3.20
+tensorflow>=1.15.2,<2.0
+pandas
+ampligraph==1.4
