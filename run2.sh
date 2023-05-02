@@ -1,7 +1,7 @@
 #!/bin/bash
 
 conda_env='ampligraph-v2'
-expname='exp7'
+expname='exp8'
 export DATA_HOME=${PWD}/ampligraph_datasets
 OUTPUT_HOME=${PWD}/expres/
 

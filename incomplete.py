@@ -68,6 +68,14 @@ def inject_incorrect(id_train, proportion=0.3) -> np.ndarray:
     remaind = list(set(original) - set(sampled))
     return np.vstack([remaind, generated_incorrect])
 
+def make_incomplete(id_train, proportion=0.3) -> np.ndarray:
+    sampled = random.sample(id_train.tolist(), int(len(id_train)*proportion))
+    # generated_incorrect = sample_negative(np.array(sampled, dtype=np.int32))
+    # replace the original sampled triples with incorrect ones
+    original = tuple(map(tuple, id_train))
+    sampled = tuple(map(tuple, sampled))
+    remaind = list(set(original) - set(sampled))
+    return np.array(remaind)
 
 def measure_kg(lpmodel, kg:np.ndarray, beta=0.1):
     '''
@@ -84,7 +92,8 @@ def measure_kg(lpmodel, kg:np.ndarray, beta=0.1):
     }
     
 def experiment(lpmodel, kg, alpha=0.3, beta=0.1, kgname='kg', expname=None):
-    neg_kg = inject_incorrect(kg, alpha)
+    # neg_kg = inject_incorrect(kg, alpha)
+    neg_kg = make_incomplete(kg, alpha)
     model1 = deepcopy(lpmodel)
     model2 = deepcopy(lpmodel)
 
@@ -125,10 +134,10 @@ hyperparams = {
         'epochs': 1000,
     }
 
-# transe = TransE(**hyperparams)
-# comp = ComplEx(**hyperparams)
+transe = TransE(**hyperparams)
+comp = ComplEx(**hyperparams)
 # conve = ConvE(**hyperparams)
-convkb = ConvKB(**hyperparams)
+# convkb = ConvKB(**hyperparams)
 
 fb15k237 = load_fb15k_237()
 wn18rr = load_wn18rr()
@@ -147,7 +156,7 @@ for ds in [fb15k, fb15k237, wn18, wn18rr, yago310]:
     id_train, id_valid, id_test = numerise_kg(ds['train'], ds['valid'], ds['test'])
     kg = np.vstack([id_train, id_test])
 
-    # experiment(comp, kg, kgname=ds['name'], expname='comp')
-    # experiment(transe, kg, kgname=ds['name'], expname='transe')
-    experiment(convkb, kg, kgname=ds['name'], expname='convb')
+    experiment(comp, kg, kgname=ds['name'], expname='comp')
+    experiment(transe, kg, kgname=ds['name'], expname='transe')
+    # experiment(convkb, kg, kgname=ds['name'], expname='convb')
 
